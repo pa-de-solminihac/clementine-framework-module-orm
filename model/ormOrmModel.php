@@ -5,7 +5,7 @@ class ormOrmModel extends ormOrmModel_Parent
     /**
      * NOTE: utiliser plusieurs tables ne fonctionne bien que dans le cas de
      * tables en relation 1-1 (car les jointures sont en INNER JOIN)
-     * Pour les tables n'entrant pas dans ce cadre, on peut toujours les 
+     * Pour les tables n'entrant pas dans ce cadre, on peut toujours les
      * gérer en dehors, en passant par une surcharge. Ainsi, on utilisera ORM
      * pour les tables en relation 1-1, et on gèrera les autres tables dans la
      * surcharge.
@@ -38,7 +38,7 @@ class ormOrmModel extends ormOrmModel_Parent
 
     /**
      * group_by : destiné aux surcharges, si nécessaire
-     * 
+     *
      * @var mixed
      * @access public
      */
@@ -57,6 +57,7 @@ class ormOrmModel extends ormOrmModel_Parent
         'readonly_tables' => array(),
         'table_aliases' => array(),
         'hidden_fields' => array(),
+        'search_fields' => array(), // champs dans lesquels chercher
         'custom_fields' => array(), // champs a rajouter dans la requete SELECT de base (pour utilisation dans un WHERE, un ORDER BY...)
         'custom_search' => array(), // champs dans lesquels chercher à la place du champ demandé (pour adapter la recherche, dans le cas d'un custom_field utilisant GROUP_CONCAT...)
         'custom_order_by' => array(), // tableau associatif permettant de remplacer "ORDER BY key" par "ORDER BY val"
@@ -66,7 +67,7 @@ class ormOrmModel extends ormOrmModel_Parent
      * _init : fonction à surcharger, appelee par le constructeur
      *         passer par une fonction plutot que par les donnees membres
      *         directement est plus flexible (on peut charger des modeles...)
-     * 
+     *
      * @return void
      */
     public function _init($params = null)
@@ -96,7 +97,7 @@ class ormOrmModel extends ormOrmModel_Parent
 
     /**
      * __construct : recupere les champs, types et cles des tables specifiees dans le tableau $this->tables
-     * 
+     *
      * @access public
      * @return void
      */
@@ -229,10 +230,10 @@ class ormOrmModel extends ormOrmModel_Parent
     }
 
     /**
-     * getList : liste des enregistrements dans un tableau associatif 
+     * getList : liste des enregistrements dans un tableau associatif
      *           (chaque clé du tableau est la clé primaire
      *            correspondante au niveau BD)
-     * 
+     *
      * @access public
      * @return void
      */
@@ -275,7 +276,7 @@ class ormOrmModel extends ormOrmModel_Parent
 
     /**
      * get : renvoie l'enregistrement déterminé par la clé primaire
-     * 
+     *
      * @param mixed $insecure_primary_key : tableau associatif 'champ de la clé primaire' => 'valeur'
      * @access public
      * @return void
@@ -314,7 +315,7 @@ class ormOrmModel extends ormOrmModel_Parent
 
     /**
      * create : crée un enregistrement à partir des valeurs de $insecure_values
-     * 
+     *
      * @param mixed $insecure_values : tableau associatif 'table-champ' => 'valeur'
      * @access public
      * @return void
@@ -390,7 +391,7 @@ class ormOrmModel extends ormOrmModel_Parent
                 foreach ($this->metas['primary_key'][$table_alias] as $pkfield => $pktype) {
                     if (!isset($fieldssql_array[$pkfield]) && $pktype != 'auto_increment') {
                         if (!isset($this->metas['keys_to_ignore'][$table_alias . '.' . $pkfield])) {
-                            $errors[] = "Missing value for field $pkfield (which is part of the primary key for table) \r\n";
+                            $errors[] = "Missing value for field $pkfield (which is part of the primary key for table). If it is a foreign_key, check that it points to a field known by \$last_insert_ids \r\n";
                         } else {
                             continue 2;
                         }
@@ -445,7 +446,7 @@ class ormOrmModel extends ormOrmModel_Parent
     /**
      * update : met a jour l'enregistrement identifié par $insecure_primary_key
      *                   à partir des valeurs de $insecure_values
-     * 
+     *
      * @param mixed $insecure_values : tableau associatif 'table-champ' => 'valeur', par exemple $_POST
      * @param mixed $insecure_primary_key : tableau associatif 'table-champ' => 'valeur', par exemple $_GET
      * @access public
@@ -601,7 +602,7 @@ class ormOrmModel extends ormOrmModel_Parent
 
     /**
      * search : recherche les enregistrements qui correspondent aux valeurs de $insecure_values
-     * 
+     *
      * @param mixed $insecure_values : tableau associatif 'table-champ' => 'valeur', par exemple $_POST
      * @param mixed $params : tableau d'options, qui seront également transmises à getList
      * @access public
@@ -630,8 +631,8 @@ class ormOrmModel extends ormOrmModel_Parent
 
     /**
      * delete : supprime l'enregistrement identifié par $insecure_primary_key
-     * 
-     * @param mixed $insecure_primary_key 
+     *
+     * @param mixed $insecure_primary_key
      * @access public
      * @return void
      */
@@ -699,10 +700,10 @@ class ormOrmModel extends ormOrmModel_Parent
     }
 
     /**
-     * sanitizeValues : filtre les valeurs du tableau $insecure_array 
+     * sanitizeValues : filtre les valeurs du tableau $insecure_array
      *                  avec la fonction strip_tags et renvoie le tableau filtré
-     * 
-     * @param mixed $insecure_array 
+     *
+     * @param mixed $insecure_array
      * @access public
      * @return void
      */
@@ -766,8 +767,8 @@ class ormOrmModel extends ormOrmModel_Parent
     /**
      * sanitizePrimaryKey : alias de sanitizeValues
      *                      utiliser un alias permet de faciliter la surcharge
-     * 
-     * @param mixed $insecure_array 
+     *
+     * @param mixed $insecure_array
      * @access public
      * @return void
      */
@@ -778,7 +779,7 @@ class ormOrmModel extends ormOrmModel_Parent
 
     /**
      * getBaseSelectFromThis : returns base SQL query (retrieves all the rows)
-     * 
+     *
      * @access public
      * @return void
      */
@@ -867,8 +868,8 @@ class ormOrmModel extends ormOrmModel_Parent
     /*
      * getPKSql : returns the SQL query for the primary key,
      *                     based on the values submitted in $insecure_array
-     * 
-     * @param mixed $insecure_array 
+     *
+     * @param mixed $insecure_array
      * @access public
      * @return void
      */
@@ -897,14 +898,14 @@ class ormOrmModel extends ormOrmModel_Parent
 
     /**
      * completePrimaryKey : checks if there is enough fields provided to have an identifier
-     * 
-     * @param mixed $insecure_array 
+     *
+     * @param mixed $insecure_array
      * @access public
      * @return void
      */
     public function completePrimaryKey($insecure_array)
     {
-        // par un select avec jointure, on fait d'une pierre deux coups : 
+        // par un select avec jointure, on fait d'une pierre deux coups :
         // - on recupere les elements manquants
         // - on verifie que les informations fournies ne sont pas contradictoires
         // on ne passe pas de parametres supplementaires ici, c'est volontaire
