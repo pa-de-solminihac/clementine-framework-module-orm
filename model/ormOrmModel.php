@@ -322,6 +322,8 @@ class ormOrmModel extends ormOrmModel_Parent
      */
     public function create($insecure_values, $params = null)
     {
+        $module_name = $this->getCurrentModule();
+        $err = $this->getHelper('errors');
         $ns = $this->getModel('fonctions');
         $db = $this->getModel('db');
         $secure_values = $this->sanitizeValues($insecure_values);
@@ -391,7 +393,9 @@ class ormOrmModel extends ormOrmModel_Parent
                 foreach ($this->metas['primary_key'][$table_alias] as $pkfield => $pktype) {
                     if (!isset($fieldssql_array[$pkfield]) && $pktype != 'auto_increment') {
                         if (!isset($this->metas['keys_to_ignore'][$table_alias . '.' . $pkfield])) {
-                            $errors[] = "Missing value for field $pkfield (which is part of the primary key for table). If it is a foreign_key, check that it points to a field known by \$last_insert_ids \r\n";
+                            $errmsg = "Missing value for field $pkfield (which is part of the primary key for table). If it is a foreign_key, check that it points to a field known by \$last_insert_ids \r\n";
+                            $errors[] = $errmsg;
+                            $err->register_err('create', 'missing_value', $errmsg, $module_name);
                         } else {
                             continue 2;
                         }
@@ -419,7 +423,9 @@ class ormOrmModel extends ormOrmModel_Parent
             // on ne prend que la cle primaire de la table $table_real
             // try a non fatal query (if duplicate key, just rollback)
             if ($db->query($sql, true) === false) {
-                $errors[] = 'Error while saving values in table "' . $table_alias . '"';
+                $errmsg = 'Error while saving values in table "' . $table_alias . '"';
+                $errors[] = $errmsg;
+                $err->register_err('create', 'saving_values', $errmsg, $module_name);
             } else {
                 $ai_field = array_search('auto_increment', $this->metas['primary_key'][$table_alias]);
                 if ($ai_field) {
