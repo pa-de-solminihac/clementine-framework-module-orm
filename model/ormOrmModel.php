@@ -424,6 +424,10 @@ class ormOrmModel extends ormOrmModel_Parent
             // try a non fatal query (if duplicate key, just rollback)
             if ($db->query($sql, true) === false) {
                 $errmsg = 'Error while saving values in table "' . $table_alias . '"';
+                if (__DEBUGABLE__ && Clementine::$config['clementine_debug']['display_errors']) {
+                    $errmsg .= ', error was: ' . PHP_EOL . PHP_EOL . $db->error();
+                    $errmsg .= ', query was: ' . PHP_EOL . PHP_EOL . $sql;
+                }
                 $errors[] = $errmsg;
                 $err->register_err('create', 'saving_values', $errmsg, $module_name);
             } else {
