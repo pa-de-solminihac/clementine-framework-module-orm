@@ -734,18 +734,6 @@ class ormOrmModel extends ormOrmModel_Parent
         return $secure_array;
     }
 
-    public function sanitizeDefault ($secure_array, $key, $val) {
-
-        if (is_array($val))
-            foreach ($val as $subkey => $subval)
-                $secure_array[$key][$subkey] = $this->getModel('fonctions')->strip_tags($subval);
-        
-        else
-            $secure_array[$key] = $this->getModel('fonctions')->strip_tags($val);
-
-        return $secure_array;
-    }
-
     /**
      * sanitizeValues : filtre les valeurs du tableau $insecure_array
      *                  avec la fonction strip_tags et renvoie le tableau filtré
@@ -771,32 +759,32 @@ class ormOrmModel extends ormOrmModel_Parent
 
                     switch ($type) {
 
-                    case 'checkbox'     : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'int'          : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'togglebutton' : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'select'       : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'number'       : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'text'         : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'password'     : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'tel'          : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'url'          : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'email'        : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'search'       : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'datetime'     : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'date'         : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'time'         : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'month'        : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'week'         : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'number'       : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'range'        : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'color'        : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'radio'        : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'html'         : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'file'         : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'hidden'       : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'span'         : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'mediumtext'   : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
-                    case 'textarea'     : $secure_array = $this->sanitizeDefault($secure_array, $key, $val); break;
+                    case 'checkbox'     :
+                    case 'int'          :
+                    case 'togglebutton' :
+                    case 'select'       :
+                    case 'number'       :
+                    case 'text'         :
+                    case 'password'     :
+                    case 'tel'          :
+                    case 'url'          :
+                    case 'email'        :
+                    case 'search'       :
+                    case 'datetime'     :
+                    case 'date'         :
+                    case 'time'         :
+                    case 'month'        :
+                    case 'week'         :
+                    case 'number'       :
+                    case 'range'        :
+                    case 'color'        :
+                    case 'radio'        :
+                    case 'html'         :
+                    case 'file'         :
+                    case 'hidden'       :
+                    case 'span'         :
+                    case 'mediumtext'   :
+                    case 'textarea'     :
 
                     case 'boolean':
                         $secure_array = $this->sanitizeBoolean($secure_array, $key, $val);
