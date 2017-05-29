@@ -132,45 +132,46 @@ class ormOrmModel extends ormOrmModel_Parent
                     } else {
                         $table_alias = $table_real;
                     }
-                    $champs = $db->list_fields($table_real);
-                    foreach ($champs as $champ) {
-                        $type = preg_replace('/[( ].*/', '', $champ['Type']);
-                        // cas particulier boolean vu comme tinyint
-                        if (strpos('tinyint(1)', $champ['Type']) === 0) {
-                            $type = 'boolean';
-                        }
-                        $size = (int) preg_replace('/^[^\(]*\(/', '', $champ['Type']);
-                        if (!isset($this->fields[$table_alias . '.' . $champ['Field']])) {
-                            $this->fields[$table_alias . '.' . $champ['Field']] = array();
-                        }
-                        $this->fields[$table_alias . '.' . $champ['Field']]['type'] = $type;
-                        $this->fields[$table_alias . '.' . $champ['Field']]['size'] = $size;
-                        // charge les valeurs possibles pour les type enum et set
-                        if ($type == 'enum' || $type == 'set') {
-                            $enum_array = array();
-                            $champ_type = $champ['Type'];
-                            $champ_type = substr($champ_type, (strlen($type) + 2), -2); // supprime les extremites "enum('" et "')" de la chaine
-                            $champ_type = str_replace("''", "\\'", $champ_type);
-                            $enum_array = explode("','", $champ_type);
-                            $values = array();
-                            foreach ($enum_array as $val) {
-                                $values[stripslashes($val)] = stripslashes($val);
+                    if ($champs = $db->list_fields($table_real)) {
+                        foreach ($champs as $champ) {
+                            $type = preg_replace('/[( ].*/', '', $champ['Type']);
+                            // cas particulier boolean vu comme tinyint
+                            if (strpos('tinyint(1)', $champ['Type']) === 0) {
+                                $type = 'boolean';
                             }
-                            $this->fields[$table_alias . '.' . $champ['Field']]['fieldvalues'] = $values;
-                        }
-                        // charge les commentaires des champs
-                        if (isset($champ['Comment']) && strlen($champ['Comment'])) {
-                            $this->fields[$table_alias . '.' . $champ['Field']]['comment'] = $champ['Comment'];
-                        }
-                        // primary key
-                        if ($champ['Key'] == 'PRI') {
-                            $this->metas['primary_key'][$table_alias][$champ['Field']] = $champ['Extra'];
-                            // hidden fields : primary key || keys_to_ignore
-                            if ($champ['Extra'] == 'auto_increment' || isset($this->metas['keys_to_ignore'][$table_alias . '.' . $champ['Field']])) {
-                                if (!isset($this->metas['hidden_fields'][$table_alias . '.' . $champ['Field']])) {
-                                    $this->metas['hidden_fields'][$table_alias . '.' . $champ['Field']] = array();
+                            $size = (int)preg_replace('/^[^\(]*\(/', '', $champ['Type']);
+                            if (!isset($this->fields[$table_alias . '.' . $champ['Field']])) {
+                                $this->fields[$table_alias . '.' . $champ['Field']] = array();
+                            }
+                            $this->fields[$table_alias . '.' . $champ['Field']]['type'] = $type;
+                            $this->fields[$table_alias . '.' . $champ['Field']]['size'] = $size;
+                            // charge les valeurs possibles pour les type enum et set
+                            if ($type == 'enum' || $type == 'set') {
+                                $enum_array = array();
+                                $champ_type = $champ['Type'];
+                                $champ_type = substr($champ_type, (strlen($type) + 2), -2); // supprime les extremites "enum('" et "')" de la chaine
+                                $champ_type = str_replace("''", "\\'", $champ_type);
+                                $enum_array = explode("','", $champ_type);
+                                $values = array();
+                                foreach ($enum_array as $val) {
+                                    $values[stripslashes($val)] = stripslashes($val);
                                 }
-                                $this->metas['hidden_fields'][$table_alias . '.' . $champ['Field']]['flag'] = $champ['Extra'];
+                                $this->fields[$table_alias . '.' . $champ['Field']]['fieldvalues'] = $values;
+                            }
+                            // charge les commentaires des champs
+                            if (isset($champ['Comment']) && strlen($champ['Comment'])) {
+                                $this->fields[$table_alias . '.' . $champ['Field']]['comment'] = $champ['Comment'];
+                            }
+                            // primary key
+                            if ($champ['Key'] == 'PRI') {
+                                $this->metas['primary_key'][$table_alias][$champ['Field']] = $champ['Extra'];
+                                // hidden fields : primary key || keys_to_ignore
+                                if ($champ['Extra'] == 'auto_increment' || isset($this->metas['keys_to_ignore'][$table_alias . '.' . $champ['Field']])) {
+                                    if (!isset($this->metas['hidden_fields'][$table_alias . '.' . $champ['Field']])) {
+                                        $this->metas['hidden_fields'][$table_alias . '.' . $champ['Field']] = array();
+                                    }
+                                    $this->metas['hidden_fields'][$table_alias . '.' . $champ['Field']]['flag'] = $champ['Extra'];
+                                }
                             }
                         }
                     }
@@ -709,6 +710,42 @@ class ormOrmModel extends ormOrmModel_Parent
         }
     }
 
+    public function sanitizeBoolean ($secure_array, $key, $val)
+    {
+        if (is_array($val)) {
+            foreach ($val as $subkey => $subval) {
+                $secure_array[$key][$subkey] = (int)((bool)$subval);
+            }
+        } else {
+            $secure_array[$key] = (int)((bool)$val);
+        }
+        return $secure_array;
+    }
+
+    public function sanitizeBigint ($secure_array, $key, $val)
+    {
+        if (is_array($val)) {
+            foreach ($val as $subkey => $subval) {
+                $secure_array[$key][$subkey] = (int)$subval;
+            }
+        } else {
+            $secure_array[$key] = (int)$val;
+        }
+        return $secure_array;
+    }
+
+    public function sanitizeDefault ($secure_array, $key, $val)
+    {
+        if (is_array($val)) {
+            foreach ($val as $subkey => $subval) {
+                $secure_array[$key][$subkey] = $ns->strip_tags($subval);
+            }
+        } else {
+            $secure_array[$key] = $ns->strip_tags($val);
+        }
+        return $secure_array;
+    }
+
     /**
      * sanitizeValues : filtre les valeurs du tableau $insecure_array
      *                  avec la fonction strip_tags et renvoie le tableau filtré
@@ -727,37 +764,48 @@ class ormOrmModel extends ormOrmModel_Parent
                 if (!empty($this->fields[$field]['type'])) {
                     $type = $this->fields[$field]['type'];
                     switch ($type) {
-                    case 'tinyint':
-                    case 'int':
-                    case 'smallint':
-                    case 'mediumint':
-                    case 'bigint':
-                            if (is_array($val)) {
-                                foreach ($val as $subkey => $subval) {
-                                    $secure_array[$key][$subkey] = (int)$subval;
-                                }
-                            } else {
-                                $secure_array[$key] = (int)$val;
-                            }
-                        break;
-                    case 'bit':
+                    case 'bit': 
                     case 'boolean':
-                            if (is_array($val)) {
-                                foreach ($val as $subkey => $subval) {
-                                    $secure_array[$key][$subkey] = (int)((bool)$subval);
-                                }
-                            } else {
-                                $secure_array[$key] = (int)((bool)$val);
-                            }
+                        $secure_array = $this->sanitizeBoolean($secure_array, $key, $val);
                         break;
-                    default:
-                            if (is_array($val)) {
-                                foreach ($val as $subkey => $subval) {
-                                    $secure_array[$key][$subkey] = $ns->strip_tags($subval);
-                                }
-                            } else {
-                                $secure_array[$key] = $ns->strip_tags($val);
-                            }
+                    case 'bigint':
+                    case 'int':
+                    case 'mediumint':
+                    case 'smallint':
+                    case 'tinyint':
+                        $secure_array = $this->sanitizeBigint($secure_array, $key, $val);
+                        break;
+                    case 'checkbox':
+                    case 'color':
+                    case 'date':
+                    case 'datetime':
+                    case 'email':
+                    case 'enum':
+                    case 'file':
+                    case 'hidden':
+                    case 'html':
+                    case 'input':
+                    case 'longtext':
+                    case 'mediumtext':
+                    case 'month':
+                    case 'number':
+                    case 'password':
+                    case 'radio':
+                    case 'range':
+                    case 'search':
+                    case 'select':
+                    case 'set':
+                    case 'span':
+                    case 'tel':
+                    case 'text':
+                    case 'textarea':
+                    case 'time':
+                    case 'timestamp':
+                    case 'tinytext':
+                    case 'togglebutton':
+                    case 'url':
+                    case 'week':
+                        $secure_array = $this->sanitizeDefault($secure_array, $key, $val);
                         break;
                     }
                 } else {
@@ -949,5 +997,4 @@ class ormOrmModel extends ormOrmModel_Parent
         }
         return $insecure_array;
     }
-
 }
