@@ -736,6 +736,7 @@ class ormOrmModel extends ormOrmModel_Parent
 
     public function sanitizeDefault ($secure_array, $key, $val)
     {
+        $ns = $this->getModel('fonctions');
         if (is_array($val)) {
             foreach ($val as $subkey => $subval) {
                 $secure_array[$key][$subkey] = $ns->strip_tags($subval);
