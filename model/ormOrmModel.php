@@ -35,6 +35,8 @@ class ormOrmModel extends ormOrmModel_Parent
      *     ));
      */
     public $fields;
+    public $_sanitized_fields;
+
 
     /**
      * group_by : destiné aux surcharges, si nécessaire
@@ -710,46 +712,57 @@ class ormOrmModel extends ormOrmModel_Parent
         }
     }
 
-    public function sanitizeBoolean ($secure_array, $key, $val)
+    public function sanitizeBoolean ($val)
     {
         if (is_array($val)) {
             foreach ($val as $subkey => $subval) {
-                $secure_array[$key][$subkey] = (int)((bool)$subval);
+                $secure_val[$subkey] = (int) ((bool) $subval);
             }
         } else {
-            $secure_array[$key] = (int)((bool)$val);
+            $secure_val = (int) ((bool) $val);
         }
-        return $secure_array;
+        return $secure_val;
     }
 
-    public function sanitizeBigint ($secure_array, $key, $val)
+    public function sanitizeInt ($val)
     {
         if (is_array($val)) {
             foreach ($val as $subkey => $subval) {
-                $secure_array[$key][$subkey] = (int)$subval;
+                $secure_val[$subkey] = (int) $subval;
             }
         } else {
-            $secure_array[$key] = (int)$val;
+            $secure_val = (int) $val;
         }
-        return $secure_array;
+        return $secure_val;
     }
 
-    public function sanitizeDefault ($secure_array, $key, $val)
+    public function sanitizeFloat ($val)
+    {
+        if (is_array($val)) {
+            foreach ($val as $subkey => $subval) {
+                $secure_val[$subkey] = (float) $subval;
+            }
+        } else {
+            $secure_val = (float) $val;
+        }
+        return $secure_val;
+    }
+
+    public function sanitizeString ($val)
     {
         $ns = $this->getModel('fonctions');
         if (is_array($val)) {
             foreach ($val as $subkey => $subval) {
-                $secure_array[$key][$subkey] = $ns->strip_tags($subval);
+                $secure_val[$subkey] = $ns->strip_tags((string) $subval);
             }
         } else {
-            $secure_array[$key] = $ns->strip_tags($val);
+            $secure_val = $ns->strip_tags((string) $val);
         }
-        return $secure_array;
+        return $secure_val;
     }
 
     /**
-     * sanitizeValues : filtre les valeurs du tableau $insecure_array
-     *                  avec la fonction strip_tags et renvoie le tableau filtré
+     * sanitizeValues : nettoie les valeurs du tableau $insecure_array
      *
      * @param mixed $insecure_array
      * @access public
@@ -759,65 +772,78 @@ class ormOrmModel extends ormOrmModel_Parent
     {
         $ns = $this->getModel('fonctions');
         $secure_array = array();
-        if (isset($insecure_array)) {
-            foreach ($insecure_array as $key => $val) {
-                $field = str_replace('-', '.', $key);
-                if (!empty($this->fields[$field]['type'])) {
-                    $type = $this->fields[$field]['type'];
-                    switch ($type) {
-                    case 'bit': 
-                    case 'boolean':
-                        $secure_array = $this->sanitizeBoolean($secure_array, $key, $val);
-                        break;
-                    case 'bigint':
-                    case 'int':
-                    case 'mediumint':
-                    case 'smallint':
-                    case 'tinyint':
-                        $secure_array = $this->sanitizeBigint($secure_array, $key, $val);
-                        break;
-                    case 'checkbox':
-                    case 'color':
-                    case 'date':
-                    case 'datetime':
-                    case 'email':
-                    case 'enum':
-                    case 'file':
-                    case 'hidden':
-                    case 'html':
-                    case 'input':
-                    case 'longtext':
-                    case 'mediumtext':
-                    case 'month':
-                    case 'number':
-                    case 'password':
-                    case 'radio':
-                    case 'range':
-                    case 'search':
-                    case 'select':
-                    case 'set':
-                    case 'span':
-                    case 'tel':
-                    case 'text':
-                    case 'textarea':
-                    case 'time':
-                    case 'timestamp':
-                    case 'tinytext':
-                    case 'togglebutton':
-                    case 'url':
-                    case 'week':
-                        $secure_array = $this->sanitizeDefault($secure_array, $key, $val);
-                        break;
-                    }
-                } else {
-                    if (is_array($val)) {
-                        foreach ($val as $subkey => $subval) {
-                            $secure_array[$key][$subkey] = $ns->strip_tags($subval);
-                        }
-                    } else {
-                        $secure_array[$key] = $ns->strip_tags($val);
-                    }
-                }
+        if (empty($insecure_array)) {
+            return array();
+        }
+        foreach ($insecure_array as $key => $val) {
+            $field = str_replace('-', '.', $key);
+            if (isset($this->_sanitized_fields[$key])) {
+                $secure_array[$key] = $this->_sanitized_fields[$key];
+                continue;
+            }
+            if (empty($this->fields[$field]['type'])) {
+                $secure_array[$key] = $this->sanitizeString($val);
+                $this->_sanitized_fields[$key] = $secure_array[$key];
+                continue;
+            }
+            $type = $this->fields[$field]['type'];
+            switch ($type) {
+            case 'bit':
+            case 'boolean':
+                $secure_array[$key] = $this->sanitizeBoolean($val);
+                $this->_sanitized_fields[$key] = $secure_array[$key];
+                break;
+            case 'bigint':
+            case 'int':
+            case 'mediumint':
+            case 'smallint':
+            case 'tinyint':
+                $secure_array[$key] = $this->sanitizeInt($val);
+                $this->_sanitized_fields[$key] = $secure_array[$key];
+                break;
+            case 'decimal':
+            case 'double':
+            case 'float':
+            case 'numeric':
+                $secure_array[$key] = $this->sanitizeFloat($val);
+                $this->_sanitized_fields[$key] = $secure_array[$key];
+                break;
+            case 'char':
+            case 'checkbox':
+            case 'color':
+            case 'date':
+            case 'datetime':
+            case 'email':
+            case 'enum':
+            case 'file':
+            case 'hidden':
+            case 'html':
+            case 'input':
+            case 'longtext':
+            case 'mediumtext':
+            case 'month':
+            case 'number':
+            case 'password':
+            case 'radio':
+            case 'range':
+            case 'search':
+            case 'select':
+            case 'set':
+            case 'span':
+            case 'tel':
+            case 'text':
+            case 'textarea':
+            case 'time':
+            case 'timestamp':
+            case 'tinytext':
+            case 'togglebutton':
+            case 'url':
+            case 'varchar':
+            case 'week':
+            case 'year':
+                $secure_array[$key] = $this->sanitizeString($val);
+                $this->_sanitized_fields[$key] = $secure_array[$key];
+                break;
             }
         }
         return $secure_array;
