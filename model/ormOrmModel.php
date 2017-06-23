@@ -781,6 +781,11 @@ class ormOrmModel extends ormOrmModel_Parent
                 $secure_array[$key] = $this->_sanitized_fields[$key];
                 continue;
             }
+            if (empty($val)) {
+                $secure_array[$key] = $val;
+                $this->_sanitized_fields[$key] = $secure_array[$key];
+                continue;
+            }
             if (empty($this->fields[$field]['type'])) {
                 $secure_array[$key] = $this->sanitizeString($val);
                 $this->_sanitized_fields[$key] = $secure_array[$key];
