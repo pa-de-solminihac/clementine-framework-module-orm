@@ -712,9 +712,9 @@ class ormOrmModel extends ormOrmModel_Parent
         }
     }
 
-    public function sanitizeBoolean ($val)
+    public function sanitizeBoolean ($val = null)
     {
-        if (is_array($val)) {
+        if (is_array($val) && count($val)) {
             foreach ($val as $subkey => $subval) {
                 $secure_val[$subkey] = (int) ((bool) $subval);
             }
@@ -724,9 +724,9 @@ class ormOrmModel extends ormOrmModel_Parent
         return $secure_val;
     }
 
-    public function sanitizeInt ($val)
+    public function sanitizeInt ($val = null)
     {
-        if (is_array($val)) {
+        if (is_array($val) && count($val)) {
             foreach ($val as $subkey => $subval) {
                 $secure_val[$subkey] = (int) $subval;
             }
@@ -736,9 +736,9 @@ class ormOrmModel extends ormOrmModel_Parent
         return $secure_val;
     }
 
-    public function sanitizeFloat ($val)
+    public function sanitizeFloat ($val = null)
     {
-        if (is_array($val)) {
+        if (is_array($val) && count($val)) {
             foreach ($val as $subkey => $subval) {
                 $secure_val[$subkey] = (float) $subval;
             }
@@ -748,12 +748,16 @@ class ormOrmModel extends ormOrmModel_Parent
         return $secure_val;
     }
 
-    public function sanitizeString ($val)
+    public function sanitizeString ($val = null)
     {
         $ns = $this->getModel('fonctions');
         if (is_array($val)) {
-            foreach ($val as $subkey => $subval) {
-                $secure_val[$subkey] = $ns->strip_tags((string) $subval);
+            if (count($val)) {
+                foreach ($val as $subkey => $subval) {
+                    $secure_val[$subkey] = $ns->strip_tags((string) $subval);
+                }
+            } else {
+                $secure_val = '';
             }
         } else {
             $secure_val = $ns->strip_tags((string) $val);
@@ -781,6 +785,7 @@ class ormOrmModel extends ormOrmModel_Parent
                 $secure_array[$key] = $this->_sanitized_fields[$key];
                 continue;
             }
+            // no type set, default to sanitizeString
             if (empty($this->fields[$field]['type'])) {
                 $secure_array[$key] = $this->sanitizeString($val);
                 $this->_sanitized_fields[$key] = $secure_array[$key];
