@@ -242,6 +242,7 @@ class ormOrmModel extends ormOrmModel_Parent
      */
     public function getList($params = null)
     {
+        $this->_sanitized_fields = array();
         $ns = $this->getModel('fonctions');
         $db = $this->getModel('db');
         // recupere la liste des elements a afficher
@@ -251,6 +252,9 @@ class ormOrmModel extends ormOrmModel_Parent
         }
         if ($this->group_by) {
             $sql .= "\nGROUP BY " . implode(",\n    ", array_unique($this->group_by));
+        }
+        if (isset($params['having'])) {
+            $sql .= "\nHAVING " . $params['having'] . ' ';
         }
         if (isset($params['order_by'])) {
             $sql .= "\nORDER BY " . $params['order_by'] . ' ';
@@ -286,6 +290,7 @@ class ormOrmModel extends ormOrmModel_Parent
      */
     public function get($insecure_primary_key, $params = null)
     {
+        $this->_sanitized_fields = array();
         $ns = $this->getModel('fonctions');
         $db = $this->getModel('db');
         $secure_primary_key = $this->sanitizePrimaryKey($insecure_primary_key);
@@ -325,6 +330,7 @@ class ormOrmModel extends ormOrmModel_Parent
      */
     public function create($insecure_values, $params = null)
     {
+        $this->_sanitized_fields = array();
         $module_name = $this->getCurrentModule();
         $err = $this->getHelper('errors');
         $ns = $this->getModel('fonctions');
@@ -467,6 +473,7 @@ class ormOrmModel extends ormOrmModel_Parent
      */
     public function update($insecure_values, $insecure_primary_key = null, $params = null)
     {
+        $this->_sanitized_fields = array();
         $ns = $this->getModel('fonctions');
         $db = $this->getModel('db');
         // si on fournit directement l'objet a enregistrer, il contient déjà la clé primaire donc on peut la récupérer
@@ -623,6 +630,7 @@ class ormOrmModel extends ormOrmModel_Parent
      */
     public function search($insecure_values, $params = null)
     {
+        $this->_sanitized_fields = array();
         $db = $this->getModel('db');
         $search_params_elements = array();
         $comparator = "=";
@@ -651,6 +659,7 @@ class ormOrmModel extends ormOrmModel_Parent
      */
     public function delete($insecure_primary_key, $params = null)
     {
+        $this->_sanitized_fields = array();
         $db = $this->getModel('db');
         $secure_primary_key = $this->sanitizePrimaryKey($insecure_primary_key);
         // important pour la sécurité : verifie si la cle primaire est suffisante... sinon on n'identifie pas completement !
@@ -848,6 +857,16 @@ class ormOrmModel extends ormOrmModel_Parent
             case 'year':
                 $secure_array[$key] = $this->sanitizeString($val);
                 $this->_sanitized_fields[$key] = $secure_array[$key];
+                break;
+            default:
+                $sanitizeMethod = 'sanitize' . ucfirst(strtolower(str_replace('_', '', $type)));
+                if (method_exists($this, $sanitizeMethod)) {
+                    $secure_array[$key] = $this->$sanitizeMethod($val);
+                    $this->_sanitized_fields[$key] = $secure_array[$key];
+                } else {
+                    // no sanitized value yet, keep the non-sanitized value but do not mark it as sanitized
+                    $secure_array[$key] = $val;
+                }
                 break;
             }
         }
