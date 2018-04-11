@@ -988,7 +988,8 @@ class ormOrmModel extends ormOrmModel_Parent
         // récupère les parametres attendus pour la clé primaire
         // dans le tableau $secure_primary_key et en fait une condition SQL
         $db = $this->getModel('db');
-        $primary_key = '(1 ';
+        $primary_key_cond = '(1 ';
+        $primary_key = '';
         $tables = $this->metas['primary_key'];
         foreach ($this->metas['primary_key'] as $table => $fields) {
             foreach ($fields as $field => $fieldmeta) {
@@ -1001,8 +1002,11 @@ class ormOrmModel extends ormOrmModel_Parent
                 }
             }
         }
-        $primary_key .= ') ';
-        return $primary_key;
+        if (empty($primary_key)) {
+            $primary_key = 'AND 0';
+        }
+        $primary_key_cond .= $primary_key . ') ';
+        return $primary_key_cond;
     }
 
     /**

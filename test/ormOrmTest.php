@@ -6,7 +6,9 @@ class ormOrmTest extends ormOrmTest_Parent
     {
         // si cette classe n'a pas été surchargée on ne fait rien
         if (get_parent_class(get_parent_class(get_called_class())) == __CLASS__) {
-            fwrite(STDERR, 'ORM tests wont run unless you override ' . __CLASS__ . PHP_EOL);
+            $color = "\033" . Clementine::$config['clementine_shell_colors']['warn'];
+            $normal = "\033" . Clementine::$config['clementine_shell_colors']['normal'];
+            fwrite(STDERR, $color . 'ORM tests wont run unless you override ' . __CLASS__ . $normal . PHP_EOL);
             return false;
         }
         static::setUpTestDB();
