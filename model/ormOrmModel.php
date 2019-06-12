@@ -109,7 +109,7 @@ class ormOrmModel extends ormOrmModel_Parent
         if (get_class($this) == 'OrmModel' || get_class($this) == 'CrudModel') {
             return false;
         }
-        if (!count($this->tables)) {
+        if (! $this->tables || !count($this->tables)) {
             $this->_init($params);
         }
         if (count($this->tables)) {
@@ -921,7 +921,7 @@ class ormOrmModel extends ormOrmModel_Parent
             } else {
                 $table_alias = $table_real;
             }
-            $nb_join = count($join);
+            $nb_join = $join ? count($join) : 0;
             if ($nb_join && isset($join['inner join'])) {
                     $sql .= "\n    INNER JOIN `" . $table_real . '` ';
                     if ($table_alias != $table_real) {
